@@ -1,0 +1,256 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/colorPrimaryDark"
+    android:gravity="center_horizontal"
+
+    android:orientation="vertical"
+    android:paddingTop="60dp"
+    tools:context=".ui.main.MainFragment">
+
+
+    <TextView
+        android:id="@+id/AccZ"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingBottom="20dp"
+        android:text="accZ"
+        android:textColor="@color/colorAccent"
+        android:textSize="20dp"
+        app:layout_constraintEnd_toStartOf="@+id/tvAccZ"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/tvAccZ"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingStart="32dp"
+        android:paddingBottom="20dp"
+        android:text="no value"
+        android:textColor="@color/white"
+        android:textSize="20dp"
+        app:layout_constraintStart_toStartOf="@id/empty"
+        app:layout_constraintStart_toEndOf="@id/empty"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+
+    <TextView
+        android:id="@+id/accuracy"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingBottom="20dp"
+        android:text="accAccuracy"
+        android:textColor="@color/colorAccent"
+        android:textSize="20dp"
+        app:layout_constraintEnd_toStartOf="@+id/tvAccAccuracy"
+        app:layout_constraintTop_toBottomOf="@+id/AccZ" />
+
+    <TextView
+        android:id="@+id/tvAccAccuracy"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingStart="32dp"
+        android:paddingBottom="20dp"
+        android:text="no value"
+        android:textColor="@color/white"
+        android:textSize="20dp"
+        app:layout_constraintStart_toStartOf="@+id/tvAccZ"
+        app:layout_constraintTop_toBottomOf="@+id/tvAccZ" />
+
+
+    <TextView
+        android:id="@+id/magAccuracy"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingBottom="20dp"
+        android:text="speed"
+        android:textColor="@color/colorAccent"
+        android:textSize="20dp"
+        app:layout_constraintEnd_toStartOf="@+id/tvSpeed"
+        app:layout_constraintTop_toBottomOf="@+id/accuracy" />
+
+    <TextView
+        android:id="@+id/tvSpeed"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingStart="32dp"
+        android:paddingBottom="20dp"
+        android:text="no value"
+        android:textColor="@color/white"
+        android:textSize="20dp"
+        app:layout_constraintStart_toStartOf="@+id/tvAccAccuracy"
+        app:layout_constraintTop_toBottomOf="@+id/tvAccAccuracy" />
+
+
+    <TextView
+        android:id="@+id/headingX"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingBottom="20dp"
+        android:text="headingX"
+        android:textColor="@color/colorAccent"
+        android:textSize="20dp"
+        app:layout_constraintEnd_toStartOf="@+id/tvHeadingX"
+        app:layout_constraintTop_toBottomOf="@+id/magAccuracy" />
+
+    <TextView
+        android:id="@+id/tvHeadingX"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingStart="32dp"
+        android:paddingBottom="20dp"
+        android:text="no value"
+        android:textColor="@color/white"
+        android:textSize="20dp"
+        app:layout_constraintStart_toStartOf="@+id/tvHeadingY"
+        app:layout_constraintTop_toBottomOf="@+id/tvHeadingY" />
+
+    <TextView
+        android:id="@+id/headingY"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingBottom="20dp"
+        android:text="headingY"
+        android:textColor="@color/colorAccent"
+        android:textSize="20dp"
+        app:layout_constraintEnd_toStartOf="@+id/tvHeadingY"
+        app:layout_constraintTop_toBottomOf="@+id/headingX" />
+
+    <TextView
+        android:id="@+id/tvHeadingY"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingStart="32dp"
+        android:paddingBottom="20dp"
+        android:text="no value"
+        android:textColor="@color/white"
+        android:textSize="20dp"
+        app:layout_constraintStart_toStartOf="@+id/tvSpeed"
+        app:layout_constraintTop_toBottomOf="@+id/tvSpeed" />
+
+
+    <TextView
+        android:id="@+id/headingZ"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingBottom="40dp"
+        android:text="headingZ"
+        android:textColor="@color/colorAccent"
+        android:textSize="20dp"
+        app:layout_constraintEnd_toStartOf="@+id/tvHeadingZ"
+        app:layout_constraintTop_toBottomOf="@+id/headingY" />
+
+    <TextView
+        android:id="@+id/tvHeadingZ"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingStart="32dp"
+        android:paddingBottom="40dp"
+        android:text="no value"
+        android:textColor="@color/white"
+        android:textSize="20dp"
+        app:layout_constraintStart_toStartOf="@+id/tvHeadingX"
+        app:layout_constraintTop_toBottomOf="@+id/tvHeadingX" />
+
+    <TextView
+        android:id="@+id/accY"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingBottom="20dp"
+        android:text="accY"
+        android:textColor="@color/colorAccent"
+        android:textSize="20dp"
+        app:layout_constraintEnd_toStartOf="@+id/tvAccY"
+        app:layout_constraintTop_toBottomOf="@+id/headingZ" />
+
+    <TextView
+        android:id="@+id/tvAccY"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingStart="32dp"
+        android:paddingBottom="20dp"
+        android:text="no value"
+        android:textColor="@color/white"
+        android:textSize="20dp"
+        app:layout_constraintStart_toStartOf="@+id/tvHeadingZ"
+        app:layout_constraintTop_toBottomOf="@+id/tvHeadingZ" />
+
+    <TextView
+        android:id="@+id/accX"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingBottom="20dp"
+        android:text="accX"
+        android:textColor="@color/colorAccent"
+        android:textSize="20dp"
+        app:layout_constraintEnd_toStartOf="@+id/tvAccX"
+        app:layout_constraintTop_toBottomOf="@+id/accY" />
+
+    <TextView
+        android:id="@+id/tvAccX"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingStart="32dp"
+        android:paddingBottom="60dp"
+        android:text="no value"
+        android:textColor="@color/white"
+        android:textSize="20dp"
+        app:layout_constraintStart_toStartOf="@+id/tvAccY"
+        app:layout_constraintTop_toBottomOf="@+id/tvAccY" />
+
+
+    <Switch
+        android:id="@+id/switchProvider"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:paddingTop="20dp"
+        android:paddingBottom="30dp"
+        android:scaleX="2"
+        android:scaleY="2"
+        android:text="GPS"
+        app:switchPadding="15dp"
+        android:textColor="@color/colorAccent"
+        android:textSize="10sp"
+        android:theme="@style/SwitchButtonGold"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tvAccX" />
+
+    <Switch
+        android:id="@+id/switchTracking"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:scaleX="2"
+        android:scaleY="2"
+        android:text="Tracking"
+        app:switchPadding="15dp"
+        android:textColor="@color/white"
+        android:textSize="10sp"
+        android:theme="@style/SwitchButtonGold"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintEnd_toEndOf="@+id/switchProvider"
+        app:layout_constraintTop_toBottomOf="@+id/switchProvider" />
+
+    <TextView
+        android:id="@+id/empty"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="1.0" />
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>
+
