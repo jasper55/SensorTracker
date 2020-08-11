@@ -1,4 +1,4 @@
 <resources>
-    <string name="app_name">GpsTracker</string>
+    <string name="app_name">SensorTracker</string>
     <string name="AUTHOR">Jan-Jasper Wagner</string>
 </resources>

@@ -113,15 +113,15 @@ class MainFragment(private val baseContext: Context) : Fragment(), SensorEventLi
         })
 
         viewModel.accelerometerReading.observe(this.viewLifecycleOwner, Observer {
-            tvAccX!!.text = round(it[0],1).toString()
-            tvAccY!!.text = round(it[1],1).toString()
-            tvAccZ!!.text = round(it[2],1).toString()
+            tvAccX!!.text = round(it[0], 1).toString()
+            tvAccY!!.text = round(it[1], 1).toString()
+            tvAccZ!!.text = round(it[2], 1).toString()
         })
 
         viewModel.magnetorReading.observe(this.viewLifecycleOwner, Observer {
-            tvHeadingX!!.text = "${round(it[0],1)} °"
-            tvHeadingY!!.text = "${round(it[1],1)} °"
-            tvHeadingZ!!.text = "${round(it[2],1)} °"
+            tvHeadingX!!.text = "${round(it[0], 1)} °"
+            tvHeadingY!!.text = "${round(it[1], 1)} °"
+            tvHeadingZ!!.text = "${round(it[2], 1)} °"
         })
 
     }
@@ -229,7 +229,7 @@ class MainFragment(private val baseContext: Context) : Fragment(), SensorEventLi
 
         // 2
         mSensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION)?.also { accelerometer ->
-            mSensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_FASTEST, SensorManager.SENSOR_DELAY_UI)
+            mSensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_NORMAL, SensorManager.SENSOR_DELAY_UI)
         }
 
         // 3
@@ -276,8 +276,8 @@ class MainFragment(private val baseContext: Context) : Fragment(), SensorEventLi
 
         if (event.sensor.type == Sensor.TYPE_LINEAR_ACCELERATION) {
             System.arraycopy(event.values, 0, accelerometerReading, 0, accelerometerReading.size)
-            viewModel.processAccelerometerData(accelerometerReading)
 
+            viewModel.processAccelerometerData(accelerometerReading, event.timestamp)
 
 //            viewModel.processAccelerometerData(event.values)
         } else if (event.sensor.type == Sensor.TYPE_MAGNETIC_FIELD) {
@@ -346,7 +346,7 @@ class MainFragment(private val baseContext: Context) : Fragment(), SensorEventLi
         // 3
         val degrees = (Math.toDegrees(orientation[0].toDouble()) + 360.0) % 360.0
         // 4
-        val angle = round(degrees,0)
+        val angle = round(degrees, 0)
 
     }
 

@@ -10,10 +10,15 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import jasper.wagner.sensortracker.R
 import jasper.wagner.sensortracker.services.LocationProvider
+import jasper.wagner.sensortracker.services.LocationProvider.Companion.TAG
+import jasper.wagner.sensortracker.utils.Constants.NS2S
 import jasper.wagner.sensortracker.utils.GpxFile
 import java.io.File
 import jasper.wagner.sensortracker.utils.Utils.getDate
+import jasper.wagner.sensortracker.utils.Utils.round
+import kotlin.math.abs
 import kotlin.math.roundToInt
+import kotlin.math.sqrt
 
 
 class MainViewModel(
@@ -78,8 +83,12 @@ class MainViewModel(
     val deltaT: LiveData<Float>
         get() = _deltaT
 
-    private var timeStep: Long? = null
+    private var timeStamp: Long? = null
 
+    var vxo = 0.0
+    var vzo = 0.0
+    var vyo = 0.0
+    var oldDeg = 0
 
 
     fun enableGPS(context: Activity) {
@@ -162,35 +171,75 @@ class MainViewModel(
         _elapsedTimeCurrentRun.value = time_elapsed
     }
 
-    fun processAccelerometerData(accelerometerReading: FloatArray) {
+    fun processAccelerometerData(accelerometerReading: FloatArray, newTimestamp: Long) {
+
+
+        if (timeStamp != null) {
+            val dT = (newTimestamp - timeStamp!!).toDouble() / NS2S
+            
+            val lax = accelerometerReading[0].toDouble()
+            val lay = accelerometerReading[1].toDouble()
+            val laz = accelerometerReading[2].toDouble()
+
+            if (abs(lax) < 0.01 && abs(laz) < 0.01) {
+                return
+            }
+
+            var rad = Math.atan2(lax, laz); // In radians
+
+            var newDeg = round(rad * (180 / Math.PI), 0).toInt()
+
+            Log.d("SpeedChange", "newDeg: ${newDeg}")
+            Log.d("SpeedChange", "oldDeg: ${oldDeg}")
+
+            oldDeg = newDeg
+
+            Log.d("SpeedChange", "x: ${lax}")
+            Log.d("SpeedChange", "z: ${laz}")
+
+            val vx = vxo + lax * dT
+            val vy = vyo + lay * dT
+            val vz = vzo + laz * dT
+
+            var speed = (round(sqrt((vx * vx + vy * vy + vz * vz)), 2)).toFloat()
+            if (speed < 0.01) {
+                speed = 0F
+            }
+            vxo = vx
+            vyo = vy
+            vzo = vz
+            _speed.postValue(speed)
+        }
+        timeStamp = newTimestamp
+
         _accelerometerReading.value = accelerometerReading
-        if(accelerometerReading[0] > 0.1F) {
-        _accX.value = _accX.value!! + accelerometerReading[0]
-        _accZ.value = _accZ.value!! + accelerometerReading[2]
-        Log.d("SpeedChange", "acc: ${accelerometerReading[0]}")
+        if (accelerometerReading[0] > 0.1F) {
+            _accX.value = _accX.value!! + accelerometerReading[0]
+            _accZ.value = _accZ.value!! + accelerometerReading[2]
+            Log.d("SpeedChange", "acc: ${accelerometerReading[0]}")
 
-            addTimeStep()
-        Log.d("SpeedChange", "delta t: ${deltaT.value!!}")
-
+//        addTimeStep()
+            Log.d("SpeedChange", "delta t: ${deltaT.value!!}")
         }
 
     }
 
     private fun addTimeStep() {
-        if (timeStep == null) {
-            timeStep = System.currentTimeMillis()
+        if (timeStamp == null) {
+            timeStamp = System.currentTimeMillis()
         } else {
-            val timeDiff = System.currentTimeMillis() - timeStep!!
+            val currentTime = System.currentTimeMillis()
+            val timeDiff = currentTime - timeStamp!!
             _deltaT.value = _deltaT.value!! + (timeDiff / 1000F)
-            timeStep = System.currentTimeMillis()
+            timeStamp = currentTime
         }
     }
 
     fun resetAcc() {
-        _accX.postValue( 0F)
-        _accZ.postValue( 0F)
+        _accX.postValue(0F)
+        _accZ.postValue(0F)
     }
-    
+
     fun processMagnetData(magnetorReading: FloatArray) {
         _magnetorReading.value = magnetorReading
         val degree = magnetorReading[0].roundToInt()
