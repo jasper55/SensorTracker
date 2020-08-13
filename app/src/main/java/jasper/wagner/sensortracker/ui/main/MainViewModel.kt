@@ -2,15 +2,14 @@ package jasper.wagner.sensortracker.ui.main
 
 import android.app.Activity
 import android.app.Application
-import android.content.Intent
+import android.hardware.SensorEvent
 import android.location.Location
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import jasper.wagner.sensortracker.R
-import jasper.wagner.sensortracker.services.LocationProvider
-import jasper.wagner.sensortracker.services.LocationProvider.Companion.TAG
+import jasper.wagner.sensortracker.model.SensorData
 import jasper.wagner.sensortracker.utils.Constants.NS2S
 import jasper.wagner.sensortracker.utils.GpxFile
 import java.io.File
@@ -37,6 +36,11 @@ class MainViewModel(
     private val _locationList = MutableLiveData<ArrayList<Location>>()
     val locationList: LiveData<ArrayList<Location>>
         get() = _locationList
+
+    private val _sensorList = MutableLiveData<ArrayList<SensorData>>()
+    val sensorList: LiveData<ArrayList<SensorData>>
+        get() = _sensorList
+
 
     private val _heading = MutableLiveData<String>()
     val heading: LiveData<String>
@@ -90,15 +94,6 @@ class MainViewModel(
     var vyo = 0.0
     var oldDeg = 0
 
-
-    fun enableGPS(context: Activity) {
-        context.startService(Intent(context, LocationProvider::class.java))
-    }
-
-    fun disableGPS(context: Activity) {
-        context.stopService(Intent(context, LocationProvider::class.java))
-    }
-
     fun updateUI(
         speed: String?, heading: String?, headingCalc: String?, altitude: String?,
         accuracy: String?, providerSource: String?
@@ -142,8 +137,28 @@ class MainViewModel(
         _locationList.value!!.add(location)
     }
 
+    fun addReadingsToList(event: SensorEvent) {
+        if (_sensorList.value!!.isNullOrEmpty()) {
+            _sensorList.value = ArrayList()
+        }
+        event.apply {
+            val data = SensorData(
+                sensorName = sensor.name,
+                type = sensor.type,
+                timeStamp = timestamp,
+                xValue = values[0],
+                yValue = values[1],
+                zValue = values[2],
+                accuracy = accuracy,
+                resolution = sensor.resolution
+            )
+            _sensorList.value!!.add(data)
+            Log.d("Event", "$data")
+        }
+    }
+
     fun startTracking() {
-        _locationList.value = ArrayList()
+        _sensorList.value = ArrayList()
     }
 
     fun saveTracking(context: Activity, filename: String, time: String) {
@@ -159,7 +174,7 @@ class MainViewModel(
 
         val gpxFile = GpxFile(context)
         try {
-            gpxFile.createFile(file, author, time, locationList.value!!)
+            gpxFile.createFile(file, author, time, sensorList.value!!)
             Log.i(TAG, "File ${file.name} successfully saved")
         } catch (e: Exception) {
             Log.e(TAG, "Not completed saving file: " + file.name + " " + e)
@@ -176,7 +191,7 @@ class MainViewModel(
 
         if (timeStamp != null) {
             val dT = (newTimestamp - timeStamp!!).toDouble() / NS2S
-            
+
             val lax = accelerometerReading[0].toDouble()
             val lay = accelerometerReading[1].toDouble()
             val laz = accelerometerReading[2].toDouble()
@@ -224,6 +239,59 @@ class MainViewModel(
 
     }
 
+    fun processAccelerometerData(event: SensorEvent) {
+
+        val newTimestamp = event.timestamp
+        if (timeStamp != null) {
+            val dT = (newTimestamp - timeStamp!!).toDouble() / NS2S
+
+            val lax = event.values[0].toDouble()
+            val lay = event.values[1].toDouble()
+            val laz = event.values[2].toDouble()
+
+            if (abs(lax) < 0.01 && abs(laz) < 0.01) {
+                return
+            }
+
+            var rad = Math.atan2(lax, laz); // In radians
+
+            var newDeg = round(rad * (180 / Math.PI), 0).toInt()
+
+            Log.d("SpeedChange", "newDeg: ${newDeg}")
+            Log.d("SpeedChange", "oldDeg: ${oldDeg}")
+
+            oldDeg = newDeg
+
+            Log.d("SpeedChange", "x: ${lax}")
+            Log.d("SpeedChange", "z: ${laz}")
+
+            val vx = vxo + lax * dT
+            val vy = vyo + lay * dT
+            val vz = vzo + laz * dT
+
+            var speed = (round(sqrt((vx * vx + vy * vy + vz * vz)), 2)).toFloat()
+            if (speed < 0.01) {
+                speed = 0F
+            }
+            vxo = vx
+            vyo = vy
+            vzo = vz
+            _speed.postValue(speed)
+        }
+        timeStamp = newTimestamp
+
+//        _accelerometerReading.value = accelerometerReading
+        if (event.values[0] > 0.1F) {
+            _accX.value = _accX.value!! + event.values[0]
+            _accZ.value = _accZ.value!! + event.values[2]
+            Log.d("SpeedChange", "acc: ${event.values[0]}")
+
+//        addTimeStep()
+            Log.d("SpeedChange", "delta t: ${deltaT.value!!}")
+        }
+
+    }
+
     private fun addTimeStep() {
         if (timeStamp == null) {
             timeStamp = System.currentTimeMillis()
@@ -257,6 +325,10 @@ class MainViewModel(
 
     fun resetDeltaT() {
         _deltaT.postValue(0F)
+    }
+
+    fun processAccelerometerData(x: Float, y: Float, z: Float, newTimestamp: Long) {
+
     }
 
 

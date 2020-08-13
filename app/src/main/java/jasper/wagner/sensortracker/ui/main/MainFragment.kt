@@ -10,6 +10,7 @@ import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.location.Location
 import android.os.Bundle
+import android.util.Log
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
@@ -38,7 +39,6 @@ class MainFragment(private val baseContext: Context) : Fragment(), SensorEventLi
 
     private lateinit var locationBroadcastReceiver: BroadcastReceiver
     private lateinit var viewModel: MainViewModel
-    private var switchProvider: Switch? = null
     private var switchTracking: Switch? = null
     private var tvAccAccuracy: TextView? = null
     private var tvSpeed: TextView? = null
@@ -54,7 +54,6 @@ class MainFragment(private val baseContext: Context) : Fragment(), SensorEventLi
     private var fileNameNumber: Int = 0
     private var startTime: Long? = null
     private var trackingIsRunning = false
-    private var gpsIsEnabled = false
     private lateinit var customToast: Toast
 
     // record the compass picture angle turned
@@ -67,6 +66,10 @@ class MainFragment(private val baseContext: Context) : Fragment(), SensorEventLi
     private val magnetometerReading = FloatArray(3)
     private val rotationMatrix = FloatArray(9)
     private val orientationAngles = FloatArray(3)
+    private var timeStamp = 0L
+    private var prevX = 0F
+    private var prevY = 0F
+    private var prevZ = 0F
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -161,62 +164,21 @@ class MainFragment(private val baseContext: Context) : Fragment(), SensorEventLi
         tvAccZ = view.findViewById(R.id.tvAccZ)
 
         switchTracking = view.findViewById(R.id.switchTracking)
-        switchProvider = view.findViewById(R.id.switchProvider)
-        switchProvider!!.setOnCheckedChangeListener { buttonView, isChecked ->
-            if (isChecked) {
-                viewModel.enableGPS(activity!!)
-                gpsIsEnabled = true
-                customToast.show(
-                    context,
-                    "GPS Provider enabled",
-                    Gravity.BOTTOM,
-                    Toast.LENGTH_SHORT
-                )
-            } else {
-                viewModel.disableGPS(activity!!)
-                gpsIsEnabled = false
-                try {
-                    context!!.unregisterReceiver(locationBroadcastReceiver)
-                } catch (e: Exception) {
-                }
-                customToast.show(
-                    context,
-                    "GPS Provider disabled",
-                    Gravity.BOTTOM,
-                    Toast.LENGTH_SHORT
-                )
-            }
-        }
+
 
         switchTracking!!.setOnCheckedChangeListener { buttonView, isChecked ->
-            if (isChecked && gpsIsEnabled) {
+            if (isChecked) {
                 trackingIsRunning = true
                 fileNameNumber += 1
                 sendStartTrackingIntent()
                 setStartTime()
                 viewModel.startTracking()
-                fileName = "${getDate()}_$fileNameNumber"
+                fileName = "sensor_readings_${getDate()}_$fileNameNumber"
                 customToast.show(context, "Tracking started", Gravity.BOTTOM, Toast.LENGTH_SHORT)
-            } else if (!isChecked && gpsIsEnabled) {
+            } else if (!isChecked) {
                 trackingIsRunning = false
                 showSaveDialog()
                 viewModel.update(VALUE_MISSING, VALUE_MISSING)
-            } else if (isChecked && !gpsIsEnabled) {
-                customToast.show(
-                    context,
-                    "gps not enabled",
-                    Gravity.CENTER_VERTICAL,
-                    Toast.LENGTH_LONG,
-                    isErrorToast = true
-                )
-            } else if (!isChecked && !gpsIsEnabled) {
-                customToast.show(
-                    context,
-                    "gps not enabled",
-                    Gravity.CENTER_VERTICAL,
-                    Toast.LENGTH_LONG,
-                    isErrorToast = true
-                )
             }
         }
     }
@@ -228,7 +190,7 @@ class MainFragment(private val baseContext: Context) : Fragment(), SensorEventLi
         mSensorManager = baseContext.getSystemService(Context.SENSOR_SERVICE) as SensorManager
 
         // 2
-        mSensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION)?.also { accelerometer ->
+        mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)?.also { accelerometer ->
             mSensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_NORMAL, SensorManager.SENSOR_DELAY_UI)
         }
 
@@ -241,16 +203,16 @@ class MainFragment(private val baseContext: Context) : Fragment(), SensorEventLi
     private fun showSaveDialog() {
         val builder = AlertDialog.Builder(context!!, androidx.appcompat.R.style.Theme_AppCompat_Dialog_Alert)
         builder.setTitle("Save Tracking")
-        builder.setMessage("Are you sure, you want to save the tracked route?")
+        builder.setMessage("Do you want to save data readings?")
 
         builder.setPositiveButton("YES") { _, _ ->
             viewModel.saveTracking(activity!!, fileName, getTime())
-            customToast.show(context, "Tracking saved", Gravity.BOTTOM, Toast.LENGTH_SHORT)
+            customToast.show(context, "Readings saved", Gravity.BOTTOM, Toast.LENGTH_SHORT)
         }
 
         builder.setNegativeButton("NO") { dialog, which ->
             fileNameNumber -= 1
-            customToast.show(context, "Tracking discarded", Gravity.BOTTOM, Toast.LENGTH_SHORT)
+            customToast.show(context, "Readings discarded", Gravity.BOTTOM, Toast.LENGTH_SHORT)
         }
         val dialog: AlertDialog = builder.create()
         dialog.show()
@@ -274,21 +236,55 @@ class MainFragment(private val baseContext: Context) : Fragment(), SensorEventLi
 
     override fun onSensorChanged(event: SensorEvent) {
 
-        if (event.sensor.type == Sensor.TYPE_LINEAR_ACCELERATION) {
-            System.arraycopy(event.values, 0, accelerometerReading, 0, accelerometerReading.size)
+        val newTimestamp = event.timestamp
 
-            viewModel.processAccelerometerData(accelerometerReading, event.timestamp)
+            if (event.sensor.type == Sensor.TYPE_ACCELEROMETER) {
 
-//            viewModel.processAccelerometerData(event.values)
-        } else if (event.sensor.type == Sensor.TYPE_MAGNETIC_FIELD) {
-            System.arraycopy(event.values, 0, magnetometerReading, 0, magnetometerReading.size)
-            viewModel.processMagnetData(magnetometerReading)
-        }
+                val x = event.values[0]
+                val y = event.values[1]
+                val z = event.values[2]
 
-        updateOrientationAngles()
+                if(x == prevX && y == prevY && z == prevZ) {
+                    Log.d("onSensorChanged","SAME")
+                    return
+                } else {
+                    Log.d("onSensorChanged","NEW______________")
 
-        val degree = event.values[0].roundToInt()
 
+                    System.arraycopy(
+                        event.values,
+                        0,
+                        accelerometerReading,
+                        0,
+                        accelerometerReading.size
+                    )
+//                viewModel.processAccelerometerData(accelerometerReading, event.timestamp)
+//                    viewModel.processAccelerometerData(event)
+                    viewModel.processAccelerometerData(x,y,z,newTimestamp)
+                    prevX = x
+                    prevY = y
+                    prevZ = z
+                    if (trackingIsRunning) {
+                        viewModel.addReadingsToList(event)
+                        Log.d("onSensorChanged","${event.values[0]} = $prevX ")
+                        Log.d("onSensorChanged","${event.values[1]} = $prevY ")
+                        Log.d("onSensorChanged","${event.values[2]} = $prevZ ")
+                    }
+                }
+
+            } else if (event.sensor.type == Sensor.TYPE_MAGNETIC_FIELD) {
+                System.arraycopy(event.values, 0, magnetometerReading, 0, magnetometerReading.size)
+                if(newTimestamp != timeStamp) {
+                    viewModel.processMagnetData(magnetometerReading)
+                }
+                if (trackingIsRunning) {
+                    viewModel.addReadingsToList(event)
+                }
+            }
+            updateOrientationAngles()
+
+
+        timeStamp = newTimestamp
     }
 
     override fun onAccuracyChanged(sensor: Sensor, accuracy: Int) {
@@ -351,7 +347,7 @@ class MainFragment(private val baseContext: Context) : Fragment(), SensorEventLi
     }
 
     companion object {
-        fun getInstance(baseContext: Context): MainFragment {
+        fun newInstance(baseContext: Context): MainFragment {
             return MainFragment(baseContext)
         }
     }
